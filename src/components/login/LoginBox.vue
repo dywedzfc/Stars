@@ -1,0 +1,13 @@
+<template>
+	<div class="loginBox-components"></div>
+</template>
+
+<script>
+export default {
+  name: 'LoginBox'
+}
+</script>
+
+<style scoped>
+
+</style>
