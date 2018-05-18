@@ -31,10 +31,8 @@ export default {
     }
   },
   methods: {
-    handleLogin: () => {
-      console.info('handleLogin:', this.$router)
-      // this.$router.push({ path: '/home' })
-      // this.router.push('home')
+    handleLogin () {
+      this.$router.push({path: '/home'})
     }
   },
   components: {
