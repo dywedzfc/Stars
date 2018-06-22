@@ -22,10 +22,12 @@
         </el-menu>
       </el-header>
       <el-main class="desktop-main" ref="desktopMain">
-        <div class="desktopItem" v-for="(item, index) in desktopItemList" :key="'desktopItemList_' + index">
-          <div class="desktopCard" :slot="index" v-if="item" @mousedown="desktopCardMousedown" @mouseup="desktopCardMouseup" @mousemove="desktopCardMousemove">
-            <span class="desktopItemImage" :style="'background-image: url(' + item.img + ')'"></span>
-            <div class="desktopItemName"><span v-text="item.name"></span></div>
+        <div class="desktop" @mousemove="desktopMousemove">
+          <div class="desktopItem" v-for="(item, index) in desktopItemList" :key="'desktopItemList_' + index">
+            <div class="desktopCard" :slot="index" v-if="item" @mousedown="desktopCardMousedown" @mouseup="desktopCardMouseup">
+              <span class="desktopItemImage" :style="'background-image: url(' + item.img + ')'"></span>
+              <span class="desktopItemName" v-text="item.name"></span>
+            </div>
           </div>
         </div>
       </el-main>
@@ -58,7 +60,8 @@ export default {
       desktopItem_mouseClickX: 0,
       desktopItem_mouseClickY: 0,
       desktopItemTop: 0,
-      desktopItemLeft: 0
+      desktopItemLeft: 0,
+      desktopItemSelected: null
     }
   },
   mounted () {
@@ -116,35 +119,58 @@ export default {
       this.desktopItemList = desktopItemList.concat()
     },
     desktopCardMousedown (e) {
-      console.info('desktopCardMousedown:', e.clientX)
-      let width = e.currentTarget.offsetWidth
-      let height = e.currentTarget.offsetHeight
+      let width = e.currentTarget.offsetWidth - 4
+      let height = e.currentTarget.offsetHeight - 4
       this.desktopItem_mouseClickType = true
       this.desktopItem_mouseClickX = e.clientX
       this.desktopItem_mouseClickY = e.clientY
       this.desktopItemTop = e.currentTarget.offsetTop
       this.desktopItemLeft = e.currentTarget.offsetLeft
+      this.desktopItemSelected = e.currentTarget
       e.currentTarget.style.position = 'fixed'
       e.currentTarget.style.width = width + 'px'
       e.currentTarget.style.height = height + 'px'
-      console.log(width, height, e.currentTarget, e.currentTarget.slot, this.desktopItemList)
     },
     desktopCardMouseup (e) {
-      console.info('desktopCardMouseup:')
-      e.target.style.position = ''
-      e.target.style.width = ''
-      e.target.style.height = ''
+      console.info('desktopCardMouseup:', e.target.tagName)
+      let thisOne = e.currentTarget
+      thisOne.style.position = ''
+      thisOne.style.top = ''
+      thisOne.style.left = ''
+      thisOne.style.width = ''
+      thisOne.style.height = ''
+      let xOffset = (e.clientX - (thisOne.parentNode.offsetLeft - 4)) / (thisOne.parentNode.offsetWidth + 8)
+      let yOffset = (e.clientY - (thisOne.parentNode.offsetTop - 4)) / (thisOne.parentNode.offsetHeight + 8)
+      xOffset = xOffset < 0 ? Math.floor(xOffset) : parseInt(xOffset)
+      yOffset = yOffset < 0 ? Math.floor(yOffset) : parseInt(yOffset)
+      console.info('desktopMousemove:', parseInt(e.currentTarget.slot) + yOffset * this.desktopColNum + xOffset)
+      let index = parseInt(e.currentTarget.slot) + yOffset * this.desktopColNum + xOffset
+      this.desktopItemDoesItExistAndRemove(parseInt(e.currentTarget.slot), index)
+      console.info('desktopMousemove:', this.desktopItemList)
       setTimeout(() => {
         this.desktopItem_mouseClickType = false
       }, 0)
     },
-    desktopCardMousemove (e) {
+    desktopItemDoesItExistAndRemove (selectedIndex, index) {
+      this.desktopItemDoesItExist(this.desktopItemList[selectedIndex], index)
+      this.desktopItemList[selectedIndex] = undefined
+    },
+    desktopItemDoesItExist (item, index) {
+      if (this.desktopItemList[index]) {
+        this.desktopItemDoesItExist(this.desktopItemList[index], index + this.desktopColNum)
+      }
+      this.desktopItemList[index] = item
+    },
+    desktopMousemove (e) {
       if (this.desktopItem_mouseClickType) {
-        console.info('desktopCardMousemove:', this.desktopItemSelected)
+        let selectedItem = this.desktopItemSelected
         let newX = e.clientX + this.desktopItemLeft - this.desktopItem_mouseClickX
         let newY = e.clientY + this.desktopItemTop - this.desktopItem_mouseClickY
-        e.currentTarget.style.left = newX + 'px'
-        e.currentTarget.style.top = newY + 'px'
+
+        // if(e.clientX) {}
+        // console.info('desktopMousemove:', e.clientX - this.desktopItemLeft, selectedItem.offsetWidth + 8)
+        selectedItem.style.left = newX + 'px'
+        selectedItem.style.top = newY + 'px'
       }
     }
   },
@@ -196,6 +222,9 @@ export default {
     }
     .desktop-main {
       padding: 0;
+      .desktop {
+        height: 100%;
+      }
       .desktopItem {
         float: left;
         width: 75px;
@@ -217,6 +246,7 @@ export default {
         user-select: none;
       }
       .desktopItemName {
+        display: block;
         color: #fff;
       }
     }
