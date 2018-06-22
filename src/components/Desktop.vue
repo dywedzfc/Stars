@@ -23,8 +23,8 @@
       </el-header>
       <el-main class="desktop-main" ref="desktopMain">
         <div class="desktopItem" v-for="(item, index) in desktopItemList" :key="'desktopItemList_' + index">
-          <div class="desktopCard" v-if="item">
-            <img class="desktopItemImage" :src="item.img">
+          <div class="desktopCard" :slot="index" v-if="item" @mousedown="desktopCardMousedown" @mouseup="desktopCardMouseup" @mousemove="desktopCardMousemove">
+            <span class="desktopItemImage" :style="'background-image: url(' + item.img + ')'"></span>
             <div class="desktopItemName"><span v-text="item.name"></span></div>
           </div>
         </div>
@@ -53,7 +53,12 @@ export default {
         {name: 'Lucy7', img: '/static/img/hzw.321518e.jpg'},
         {name: 'jeak', img: '/static/img/hzw.321518e.jpg', position: '1-0'}
       ],
-      desktopItemList: []
+      desktopItemList: [],
+      desktopItem_mouseClickType: false,
+      desktopItem_mouseClickX: 0,
+      desktopItem_mouseClickY: 0,
+      desktopItemTop: 0,
+      desktopItemLeft: 0
     }
   },
   mounted () {
@@ -66,6 +71,9 @@ export default {
     }
   },
   methods: {
+    /**
+     * 计算屏幕可摆放N行N列
+     */
     calculatedQuantity () {
       let desktopMain = this.$refs.desktopMain.$el
       let desktopMainWidth = desktopMain.offsetWidth
@@ -73,6 +81,10 @@ export default {
       this.desktopRowNum = Math.floor(desktopMainHeight / 98)
       this.desktopColNum = Math.floor(desktopMainWidth / 83)
     },
+    /**
+     * 项目显示位置
+     * @param data：项目数据
+     */
     desktopItemPosition (data) {
       let recordData = data.concat()
       let desktopItemList = []
@@ -102,6 +114,38 @@ export default {
         }
       }
       this.desktopItemList = desktopItemList.concat()
+    },
+    desktopCardMousedown (e) {
+      console.info('desktopCardMousedown:', e.clientX)
+      let width = e.currentTarget.offsetWidth
+      let height = e.currentTarget.offsetHeight
+      this.desktopItem_mouseClickType = true
+      this.desktopItem_mouseClickX = e.clientX
+      this.desktopItem_mouseClickY = e.clientY
+      this.desktopItemTop = e.currentTarget.offsetTop
+      this.desktopItemLeft = e.currentTarget.offsetLeft
+      e.currentTarget.style.position = 'fixed'
+      e.currentTarget.style.width = width + 'px'
+      e.currentTarget.style.height = height + 'px'
+      console.log(width, height, e.currentTarget, e.currentTarget.slot, this.desktopItemList)
+    },
+    desktopCardMouseup (e) {
+      console.info('desktopCardMouseup:')
+      e.target.style.position = ''
+      e.target.style.width = ''
+      e.target.style.height = ''
+      setTimeout(() => {
+        this.desktopItem_mouseClickType = false
+      }, 0)
+    },
+    desktopCardMousemove (e) {
+      if (this.desktopItem_mouseClickType) {
+        console.info('desktopCardMousemove:', this.desktopItemSelected)
+        let newX = e.clientX + this.desktopItemLeft - this.desktopItem_mouseClickX
+        let newY = e.clientY + this.desktopItemTop - this.desktopItem_mouseClickY
+        e.currentTarget.style.left = newX + 'px'
+        e.currentTarget.style.top = newY + 'px'
+      }
     }
   },
   components: {
@@ -162,11 +206,15 @@ export default {
         width: calc(100% - 4px);
         height: calc(100% - 4px);
         padding: 2px 2px;
+        user-select: none;
       }
       .desktopItemImage {
+        display: inline-block;
         width: 65px;
         height: 65px;
         margin-bottom: 5px;
+        background-size: 100%;
+        user-select: none;
       }
       .desktopItemName {
         color: #fff;
